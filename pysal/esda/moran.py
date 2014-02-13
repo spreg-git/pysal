@@ -87,6 +87,7 @@ class Moran:
                    standardized I based on permutations
     p_z_sim      : float (if permutations>0)
                    p-value based on standard normal approximation from
+                   permutations
 
     Examples
     --------
@@ -603,7 +604,7 @@ class Moran_Local:
             self.__crand()
             sim = np.transpose(self.rlisas)
             above = sim >= self.Is
-            larger = sum(above)
+            larger = np.sum(above, axis=0)
             low_extreme = (self.permutations - larger) < larger
             larger[low_extreme] = self.permutations - larger[low_extreme]
             self.p_sim = (larger + 1.0) / (permutations + 1.0)
