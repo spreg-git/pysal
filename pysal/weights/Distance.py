@@ -6,11 +6,10 @@ __author__ = "Sergio J. Rey <srey@asu.edu> "
 
 import pysal
 import scipy.spatial
-from pysal.common import *
+from pysal.common import KDTree
 from pysal.weights import W
-
-from scipy import sparse
 import scipy.stats
+import numpy as np
 
 __all__ = ["knnW", "Kernel", "DistanceBand"]
 
@@ -35,15 +34,15 @@ def knnW(data, k=2, p=2, ids=None, pct_unique=0.25):
                  1: Manhattan distance
     ids        : list
                  identifiers to attach to each observation
-    pct_unique : float 
+    pct_unique : float
                  threshold percentage of unique points in data. Below this
                  threshold tree is built on unique values only
+
     Returns
     -------
 
     w         : W instance
                 Weights object with binary weights
-
 
     Examples
     --------
@@ -95,7 +94,6 @@ def knnW(data, k=2, p=2, ids=None, pct_unique=0.25):
     >>> 0 in wnn2.neighbors
     False
 
-
     Notes
     -----
 
@@ -114,16 +112,17 @@ def knnW(data, k=2, p=2, ids=None, pct_unique=0.25):
         info = nnq[1]
     elif type(data).__name__ == 'ndarray':
         # check if unique points are a small fraction of all points
-        u = scipy.stats._support.unique(data)
+        ind =  np.lexsort(data.T)
+        u = data[np.concatenate(([True],np.any(data[ind[1:]]!=data[ind[:-1]],axis=1)))]
         pct_u = len(u)*1. / len(data)
         if pct_u < pct_unique:
             tree = KDTree(u)
             nnq = tree.query(data, k=k+1, p=p)
             info = nnq[1]
-            uid = [ np.where((data==ui).all(axis=1))[0][0] for ui in u]
-            new_info = np.zeros((len(data),k+1),'int')
-            for i,row in enumerate(info):
-                new_info[i] = [ uid[j] for j in row]
+            uid = [np.where((data == ui).all(axis=1))[0][0] for ui in u]
+            new_info = np.zeros((len(data), k + 1), 'int')
+            for i, row in enumerate(info):
+                new_info[i] = [uid[j] for j in row]
             info = new_info
         else:
             kd = KDTree(data)
@@ -150,7 +149,6 @@ def knnW(data, k=2, p=2, ids=None, pct_unique=0.25):
 class Kernel(W):
     """Spatial weights based on kernel functions
 
-
     Parameters
     ----------
 
@@ -174,7 +172,6 @@ class Kernel(W):
                   function.
     function    : string {'triangular','uniform','quadratic','quartic','gaussian'}
                   kernel function defined as follows with
-                 
 
                   .. math::
 
@@ -198,13 +195,11 @@ class Kernel(W):
 
                       K(z) = (3/4)(1-z^2) \ if |z| \le 1
 
-
                   quartic
 
                   .. math::
 
                       K(z) = (15/16)(1-z^2)^2 \ if |z| \le 1
-
 
                   gaussian
 
@@ -289,7 +284,6 @@ class Kernel(W):
            [ 14.14213704],
            [ 18.02775818]])
 
-
     Diagonals to 1.0
 
     >>> kq = Kernel(points,function='gaussian')
@@ -327,7 +321,6 @@ class Kernel(W):
         neighbors, weights = self._k_to_W(ids)
         if diagonal:
             for i in neighbors:
-                nis = neighbors[i]
                 weights[i][neighbors[i].index(i)] = 1.0
         W.__init__(self, neighbors, weights, ids)
 
@@ -370,7 +363,6 @@ class Kernel(W):
                          bwi in enumerate(self.bandwidth)]
             self.neigh = neighbors
         # get distances for neighbors
-        data = np.array(self.data)
         bw = self.bandwidth
 
         kdtq = self.kdt.query
@@ -382,17 +374,17 @@ class Kernel(W):
         zs = z
         # functions follow Anselin and Rey (2010) table 5.4
         if self.function == 'triangular':
-            self.kernel = [1 - z for z in zs]
+            self.kernel = [1 - zi for zi in zs]  
         elif self.function == 'uniform':
-            self.kernel = [np.ones(z.shape) * 0.5 for z in zs]
+            self.kernel = [np.ones(zi.shape) * 0.5 for zi in zs]
         elif self.function == 'quadratic':
-            self.kernel = [(3. / 4) * (1 - z ** 2) for z in zs]
+            self.kernel = [(3. / 4) * (1 - zi ** 2) for zi in zs]
         elif self.function == 'quartic':
-            self.kernel = [(15. / 16) * (1 - z ** 2) ** 2 for z in zs]
+            self.kernel = [(15. / 16) * (1 - zi ** 2) ** 2 for zi in zs]
         elif self.function == 'gaussian':
             c = np.pi * 2
             c = c ** (-0.5)
-            self.kernel = [c * np.exp(-(z ** 2) / 2.) for z in zs]
+            self.kernel = [c * np.exp(-(zi ** 2) / 2.) for zi in zs]
         else:
             print 'Unsupported kernel function', self.function
 
@@ -456,7 +448,6 @@ class DistanceBand(W):
     Island id:  [2]
     >>> w.weights[0]
     [0.01, 0.0079999999999999984]
-
 
     Notes
     -----
@@ -531,8 +522,8 @@ class DistanceBand(W):
                         allneighbors[ids[i]] = neigh
                         weights[ids[i]] = [self.dmat[(
                             i, j)] ** self.alpha for j in ns]
-                    except ZeroDivisionError:
-                        raise Exception, "Cannot compute inverse distance for elements at same location (distance=0)."
+                    except ZeroDivisionError, e:
+                        print(e, "Cannot compute inverse distance for elements at same location (distance=0).")
         return allneighbors, weights
 
 
@@ -543,8 +534,7 @@ def _test():
     start_suppress = np.get_printoptions()['suppress']
     np.set_printoptions(suppress=True)
     doctest.testmod()
-    np.set_printoptions(suppress=start_suppress)    
+    np.set_printoptions(suppress=start_suppress)
 
 if __name__ == '__main__':
     _test()
-
