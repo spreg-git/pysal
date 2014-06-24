@@ -16,7 +16,8 @@ from w_utils import symmetrize
 try:
     from scipy.optimize import minimize_scalar
 except ImportError as e:
-    print(e, "Maximum Likelihood in PySAL requires SciPy version 0.11 or newer.")
+    print(
+        e, "Maximum Likelihood in PySAL requires SciPy version 0.11 or newer.")
 
 __all__ = ["ML_Lag"]
 
@@ -38,6 +39,7 @@ class BaseML_Lag(RegressionPropsY, RegressionPropsVM):
                    Spatial weights object
     method       : string
                    if 'full', brute force calculation (full matrix expressions)
+                   if 'ord', Ord eigenvalue method
     epsilon      : float
                    tolerance criterion in mimimize_scalar function and inverse_product
 
@@ -194,8 +196,8 @@ class BaseML_Lag(RegressionPropsY, RegressionPropsVM):
         if methodML in ['FULL', 'ORD']:
             if methodML == 'FULL':
                 res = minimize_scalar(lag_c_loglik, 0.0, bounds=(-1.0, 1.0),
-                                      args=(self.n, e0, e1,
-                                            W), method='bounded',
+                                      args=(
+                                          self.n, e0, e1, W), method='bounded',
                                       tol=epsilon)
             elif methodML == 'ORD':
                 # check on symmetry structure
@@ -205,11 +207,10 @@ class BaseML_Lag(RegressionPropsY, RegressionPropsVM):
                     evals = la.eigvalsh(WW)
                 else:
                     evals = la.eigvals(W)
-                res = minimize_scalar(
-                    lag_c_loglik_ord, 0.0, bounds=(-1.0, 1.0),
-                    args=(self.n, e0, e1,
-                          evals), method='bounded',
-                    tol=epsilon)
+                res = minimize_scalar(lag_c_loglik_ord, 0.0, bounds=(-1.0, 1.0),
+                                      args=(
+                                          self.n, e0, e1, evals), method='bounded',
+                                      tol=epsilon)
         else:
             # program will crash, need to catch
             print "{0} is an unsupported method".format(methodML)
@@ -375,7 +376,7 @@ class ML_Lag(BaseML_Lag):
                    Name of the regression method used
 
     Examples
-    --------
+    ________
 
     >>> import numpy as np
     >>> import pysal as ps
@@ -522,11 +523,12 @@ class ML_Lag(BaseML_Lag):
     >>> mllag.title
     'MAXIMUM LIKELIHOOD SPATIAL LAG (METHOD = ORD)'
 
+
     References
     ----------
 
     .. [1] Anselin, L. (1988) "Spatial Econometrics: Methods and Models".
-        Kluwer Academic Publishers. Dordrecht.
+    Kluwer Academic Publishers. Dordrecht.
 
     """
 
@@ -539,8 +541,8 @@ class ML_Lag(BaseML_Lag):
         x_constant = USER.check_constant(x)
         method = method.upper()
         if method in ['FULL', 'ORD']:
-            BaseML_Lag.__init__(self, y=y, x=x_constant,
-                                w=w, method=method, epsilon=epsilon)
+            BaseML_Lag.__init__(
+                self, y=y, x=x_constant, w=w, method=method, epsilon=epsilon)
             # increase by 1 to have correct aic and sc, include rho in count
             self.k += 1
             self.title = "MAXIMUM LIKELIHOOD SPATIAL LAG" + \
@@ -594,7 +596,8 @@ def _test():
 
 if __name__ == "__main__":
     _test()
-
+    import numpy as np
+    import pysal as ps
     """
     db = ps.open(ps.examples.get_path("NAT.dbf"),'r')
     ds_name = "NAT.DBF"
