@@ -33,6 +33,8 @@ class W(object):
                             dataset contains any disconnected observations or
                             islands. To silence this warning set this
                             parameter to True.
+    ids = None      : list
+                      values to use for keys of the neighbors and weights dicts
 
     Attributes
     ----------
@@ -114,7 +116,7 @@ class W(object):
 
     """
 
-    def __init__(self, neighbors, weights=None, id_order=None, silent_island_warning=False):
+    def __init__(self, neighbors, weights=None, ids=None, id_order=None, silent_island_warning=False):
         self.silent_island_warning = silent_island_warning
         self.transformations = {}
         self.neighbors = neighbors
@@ -171,11 +173,11 @@ class W(object):
         col = []
         data = []
         id2i = self.id2i
-        for id_i, neigh_list in self.neighbor_offsets.iteritems():
-            card = self.cardinalities[id_i]
-            row.extend([id2i[id_i]] * card)
+        for i, neigh_list in self.neighbor_offsets.iteritems():
+            card = self.cardinalities[i]
+            row.extend([id2i[i]] * card)
             col.extend(neigh_list)
-            data.extend(self.weights[id_i])
+            data.extend(self.weights[i])
         row = np.array(row)
         col = np.array(col)
         data = np.array(data)
@@ -487,32 +489,75 @@ class W(object):
         >>> for i,wi in enumerate(w):
         ...     print i,wi
         ...
-        0 {1: 1.0, 3: 1.0}
-        1 {0: 1.0, 2: 1.0, 4: 1.0}
-        2 {1: 1.0, 5: 1.0}
-        3 {0: 1.0, 4: 1.0, 6: 1.0}
-        4 {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0}
-        5 {8: 1.0, 2: 1.0, 4: 1.0}
-        6 {3: 1.0, 7: 1.0}
-        7 {8: 1.0, 4: 1.0, 6: 1.0}
-        8 {5: 1.0, 7: 1.0}
+        0 (0, {1: 1.0, 3: 1.0})
+        1 (1, {0: 1.0, 2: 1.0, 4: 1.0})
+        2 (2, {1: 1.0, 5: 1.0})
+        3 (3, {0: 1.0, 4: 1.0, 6: 1.0})
+        4 (4, {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0})
+        5 (5, {8: 1.0, 2: 1.0, 4: 1.0})
+        6 (6, {3: 1.0, 7: 1.0})
+        7 (7, {8: 1.0, 4: 1.0, 6: 1.0})
+        8 (8, {5: 1.0, 7: 1.0})
         >>>
         """
-        class _W_iter:
+        for i in self._id_order:
+            yield i, dict(zip(self.neighbors[i], self.weights[i]))
 
-            def __init__(self, w):
-                self.w = w
-                self.n = len(w._id_order)
-                self._idx = 0
+    def remap_ids(self, new_ids):
+        '''
+        In place modification throughout `W` of id values from `old_ids` to
+        `new_ids` in all
+        ...
 
-            def next(self):
-                if self._idx >= self.n:
-                    self._idx = 0
-                    raise StopIteration
-                value = self.w.__getitem__(self.w._id_order[self._idx])
-                self._idx += 1
-                return value
-        return _W_iter(self)
+        Arguments
+        ---------
+
+        old_ids     : list/ndarray
+                      Aligned list of current ids before remapping
+        new_ids     : list/ndarray
+                      Aligned list of new ids to be inserted
+
+        Example
+        -------
+
+        >>> import pysal as ps
+        >>> w = ps.lat2W(3, 3)
+        >>> w.id_order
+        [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        >>> w.neighbors[0]
+        [3, 1]
+        >>> new_ids = ['id%i'%id for id in w.id_order]
+        >>> _ = w.remap_ids(new_ids)
+        >>> w.id_order
+        ['id0', 'id1', 'id2', 'id3', 'id4', 'id5', 'id6', 'id7', 'id8']
+        >>> w.neighbors['id0']
+        ['id3', 'id1']
+        '''
+        old_ids = self._id_order
+        if len(old_ids) != len(new_ids):
+            raise Exception("W.remap_ids: length of `old_ids` does not match \
+            that of new_ids")
+        if len(set(new_ids)) != len(new_ids):
+            raise Exception("W.remap_ids: list `new_ids` contains duplicates") 
+        else:
+            new_neighbors = {}
+            new_weights = {}
+            for o,n in zip(old_ids, new_ids):
+                o_neighbors = self.neighbors[o]
+                o_weights = self.weights[o]
+                n_neighbors = [ new_ids[old_ids.index(j)] for j in o_neighbors]
+                new_neighbors[n] = n_neighbors
+                new_weights[n] = o_weights[:]
+                self.neighbors.pop(o)
+                self.weights.pop(o)
+            self.neighbors = new_neighbors
+            self.weights = new_weights
+
+            id_order = [ self._id_order.index(o) for o in old_ids]
+            for i,id_ in enumerate(id_order):
+                self.id_order[id_] = new_ids[i]
+
+            self._reset()
 
     def __set_id_order(self, ordered_ids):
         """
@@ -543,16 +588,15 @@ class W(object):
         >>> for i,wi in enumerate(w):
         ...     print i,wi
         ...
-        0 {1: 1.0, 3: 1.0}
-        1 {0: 1.0, 2: 1.0, 4: 1.0}
-        2 {1: 1.0, 5: 1.0}
-        3 {0: 1.0, 4: 1.0, 6: 1.0}
-        4 {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0}
-        5 {8: 1.0, 2: 1.0, 4: 1.0}
-        6 {3: 1.0, 7: 1.0}
-        7 {8: 1.0, 4: 1.0, 6: 1.0}
-        8 {5: 1.0, 7: 1.0}
-
+        0 (0, {1: 1.0, 3: 1.0})
+        1 (1, {0: 1.0, 2: 1.0, 4: 1.0})
+        2 (2, {1: 1.0, 5: 1.0})
+        3 (3, {0: 1.0, 4: 1.0, 6: 1.0})
+        4 (4, {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0})
+        5 (5, {8: 1.0, 2: 1.0, 4: 1.0})
+        6 (6, {3: 1.0, 7: 1.0})
+        7 (7, {8: 1.0, 4: 1.0, 6: 1.0})
+        8 (8, {5: 1.0, 7: 1.0})
         >>> w.id_order
         [0, 1, 2, 3, 4, 5, 6, 7, 8]
         >>> w.id_order=range(8,-1,-1)
@@ -561,21 +605,20 @@ class W(object):
         >>> for i,w_i in enumerate(w):
         ...     print i,w_i
         ...
-        0 {5: 1.0, 7: 1.0}
-        1 {8: 1.0, 4: 1.0, 6: 1.0}
-        2 {3: 1.0, 7: 1.0}
-        3 {8: 1.0, 2: 1.0, 4: 1.0}
-        4 {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0}
-        5 {0: 1.0, 4: 1.0, 6: 1.0}
-        6 {1: 1.0, 5: 1.0}
-        7 {0: 1.0, 2: 1.0, 4: 1.0}
-        8 {1: 1.0, 3: 1.0}
+        0 (8, {5: 1.0, 7: 1.0})
+        1 (7, {8: 1.0, 4: 1.0, 6: 1.0})
+        2 (6, {3: 1.0, 7: 1.0})
+        3 (5, {8: 1.0, 2: 1.0, 4: 1.0})
+        4 (4, {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0})
+        5 (3, {0: 1.0, 4: 1.0, 6: 1.0})
+        6 (2, {1: 1.0, 5: 1.0})
+        7 (1, {0: 1.0, 2: 1.0, 4: 1.0})
+        8 (0, {1: 1.0, 3: 1.0})
         >>>
 
         """
         if set(self._id_order) == set(ordered_ids):
             self._id_order = ordered_ids
-            self._idx = 0
             self._id_order_set = True
             self._reset()
         else:
@@ -626,8 +669,8 @@ class W(object):
         if "neighbors_0" not in self._cache:
             self.__neighbors_0 = {}
             id2i = self.id2i
-            for id, neigh_list in self.neighbors.iteritems():
-                self.__neighbors_0[id] = [id2i[neigh] for neigh in neigh_list]
+            for j, neigh_list in self.neighbors.iteritems():
+                self.__neighbors_0[j] = [id2i[neigh] for neigh in neigh_list]
             self._cache['neighbors_0'] = self.__neighbors_0
         return self.__neighbors_0
 

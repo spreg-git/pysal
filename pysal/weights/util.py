@@ -8,7 +8,7 @@ import os
 import operator
 import scipy
 
-__all__ = ['lat2W', 'regime_weights', 'comb', 'order', 'higher_order', 'shimbel',
+__all__ = ['lat2W', 'block_weights', 'comb', 'order', 'higher_order', 'shimbel',
            'remap_ids', 'full2W', 'full', 'WSP2W', 'insert_diagonal', 'get_ids',
            'get_points_array_from_shapefile', 'min_threshold_distance', 'lat2SW', 'w_local_cluster',
            'higher_order_sp', 'hexLat2W']
@@ -193,10 +193,10 @@ def lat2W(nrows=5, ncols=5, rook=True, id_type='int'):
             alt_weights[key] = weights[i]
         w = alt_w
         weights = alt_weights
-    return pysal.weights.W(w, weights, ids)
+    return pysal.weights.W(w, weights, ids=ids, id_order=ids[:])
 
 
-def regime_weights(regimes):
+def block_weights(regimes):
     """
     Construct spatial weights for regime neighbors.
 
@@ -218,7 +218,7 @@ def regime_weights(regimes):
     Examples
     --------
 
-    >>> from pysal import regime_weights
+    >>> from pysal import block_weights
     >>> import numpy as np
     >>> regimes = np.ones(25)
     >>> regimes[range(10,20)] = 2
@@ -226,14 +226,14 @@ def regime_weights(regimes):
     >>> regimes
     array([ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  2.,  2.,  2.,
             2.,  2.,  2.,  2.,  2.,  2.,  2.,  1.,  3.,  3.,  3.,  3.])
-    >>> w = regime_weights(regimes)
+    >>> w = block_weights(regimes)
     >>> w.weights[0]
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     >>> w.neighbors[0]
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 20]
     >>> regimes = ['n','n','s','s','e','e','w','w','e']
     >>> n = len(regimes)
-    >>> w = regime_weights(regimes)
+    >>> w = block_weights(regimes)
     >>> w.neighbors
     {0: [1], 1: [0], 2: [3], 3: [2], 4: [5, 8], 5: [4, 8], 6: [7], 7: [6], 8: [4, 5]}
     """
@@ -327,12 +327,13 @@ def order(w, kmax=3):
     [1, -1, 1, 2, 1]
 
     """
-    ids = w.neighbors.keys()
+    #ids = w.neighbors.keys()
+    ids = w.id_order
     info = {}
-    for id in ids:
+    for id_ in ids:
         s = [0] * w.n
-        s[ids.index(id)] = -1
-        for j in w.neighbors[id]:
+        s[ids.index(id_)] = -1
+        for j in w.neighbors[id_]:
             s[ids.index(j)] = 1
         k = 1
         while k < kmax:
@@ -348,7 +349,7 @@ def order(w, kmax=3):
                         if s[nid] == 0:
                             s[nid] = knext
             k = knext
-        info[id] = s
+        info[id_] = s
     return info
 
 
@@ -397,14 +398,14 @@ def higher_order(w, k=2):
        Regional Science, 36, 67-89.
     """
     info = order(w, k)
-    ids = info.keys()
+    ids = w.id_order
     neighbors = {}
     weights = {}
-    for id in ids:
-        nids = [ids[j] for j, o in enumerate(info[id]) if o == k]
-        neighbors[id] = nids
-        weights[id] = [1.0] * len(nids)
-    return pysal.weights.W(neighbors, weights)
+    for id_ in ids:
+        nids = [ids[j] for j, o in enumerate(info[id_]) if o == k]
+        neighbors[id_] = nids
+        weights[id_] = [1.0] * len(nids)
+    return pysal.weights.W(neighbors, weights, id_order=ids[:])
 
 
 def higher_order_sp(w, k=2):
