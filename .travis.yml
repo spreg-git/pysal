@@ -42,12 +42,7 @@ script:
 notifications:
     email:
         recipients:
-<<<<<<< HEAD
             - pedrovma@gmail.com
-=======
-            - sjsrey@gmail.com
-            - phil.stphns@gmail.com
->>>>>>> 29295f1be66febe5a812feb42b06940c12a8e5ac
         on_success: always
         on_failure: always
 
