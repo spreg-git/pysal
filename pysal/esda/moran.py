@@ -56,7 +56,7 @@ class Moran:
     z_norm       : float
                    z-value of I under normality assumption
     p_norm       : float
-                   p-value of I under normality assumption 
+                   p-value of I under normality assumption
     VI_rand      : float
                    variance of I under randomization assumption
     seI_rand     : float
@@ -64,27 +64,34 @@ class Moran:
     z_rand       : float
                    z-value of I under randomization assumption
     p_rand       : float
-                   p-value of I under randomization assumption 
-    two_tailed   : Boolean
+                   p-value of I under randomization assumption
+    two_tailed   : boolean
                    If True p_norm and p_rand are two-tailed, otherwise they
                    are one-tailed.
-    sim          : array (if permutations>0)
+    sim          : array
+                   (if permutations>0)
                    vector of I values for permuted samples
-    p_sim        : array (if permutations>0)
+    p_sim        : array
+                   (if permutations>0)
                    p-value based on permutations (one-tailed)
                    null: spatial randomness
                    alternative: the observed I is extreme if
                    it is either extremely greater or extremely lower
                    than the values obtained based on permutations
-    EI_sim       : float (if permutations>0)
+    EI_sim       : float
+                   (if permutations>0)
                    average value of I from permutations
-    VI_sim       : float (if permutations>0)
+    VI_sim       : float
+                   (if permutations>0)
                    variance of I from permutations
-    seI_sim      : float (if permutations>0)
+    seI_sim      : float
+                   (if permutations>0)
                    standard deviation of I under permutations.
-    z_sim        : float (if permutations>0)
+    z_sim        : float
+                   (if permutations>0)
                    standardized I based on permutations
-    p_z_sim      : float (if permutations>0)
+    p_z_sim      : float
+                   (if permutations>0)
                    p-value based on standard normal approximation from
                    permutations
 
@@ -152,11 +159,11 @@ class Moran:
                    for i in xrange(permutations)]
             self.sim = sim = np.array(sim)
             above = sim >= self.I
-            larger = sum(above)
+            larger = above.sum()
             if (self.permutations - larger) < larger:
                 larger = self.permutations - larger
             self.p_sim = (larger + 1.) / (permutations + 1.)
-            self.EI_sim = sum(sim) / permutations
+            self.EI_sim = sim.sum() / permutations
             self.seI_sim = np.array(sim).std()
             self.VI_sim = self.seI_sim ** 2
             self.z_sim = (self.I - self.EI_sim) / self.seI_sim
@@ -171,7 +178,7 @@ class Moran:
         #z = (y-y.mean())/y.std()
         z = y - y.mean()
         self.z = z
-        self.z2ss = sum(z * z)
+        self.z2ss = (z * z).sum()
         self.EI = -1. / (self.n - 1)
         n = self.n
         s1 = self.w.s1
@@ -183,7 +190,7 @@ class Moran:
         self.VI_norm = v_num / v_den - (1.0 / (n - 1)) ** 2
         self.seI_norm = self.VI_norm ** (1 / 2.)
 
-        k = (1 / (sum(z ** 4)) * ((sum(z ** 2)) ** 2))
+        k = (1 / ((z ** 4).sum()) * (((z ** 2).sum()) ** 2))
         vi = (1 / (((n - 1) ** 3) * s02)) * ((n * ((n * n - 3 * n + 3)
                                                    * s1 - n * s2 + 3 * s02))
                                              - (k * ((n * n - n) * s1 - 2 * n *
@@ -193,7 +200,7 @@ class Moran:
 
     def __calc(self, z):
         zl = slag(self.w, z)
-        inum = sum(z * zl)
+        inum = (z * zl).sum()
         return self.n / self.w.s0 * inum / self.z2ss
 
 
@@ -206,10 +213,10 @@ class Moran_BV:
     x : array
         x-axis variable
     y : array
-        (wy will be on y axis)
+        wy will be on y axis
     w : W
         weight instance assumed to be aligned with y
-    transformation  : string
+    transformation  : {'R', 'B', 'D', 'U', 'V'}
                       weights transformation, default is row-standardized "r".
                       Other options include
                       "B": binary,
@@ -232,22 +239,29 @@ class Moran_BV:
                     number of permutations
     I             : float
                     value of bivariate Moran's I
-    sim           : array (if permutations>0)
+    sim           : array
+                    (if permutations>0)
                     vector of I values for permuted samples
-    p_sim         : float (if permutations>0)
+    p_sim         : float
+                    (if permutations>0)
                     p-value based on permutations (one-sided)
                     null: spatial randomness
                     alternative: the observed I is extreme
                     it is either extremely high or extremely low
-    EI_sim        : array (if permutations>0)
+    EI_sim        : array
+                    (if permutations>0)
                     average value of I from permutations
-    VI_sim        : array (if permutations>0)
+    VI_sim        : array
+                    (if permutations>0)
                     variance of I from permutations
-    seI_sim       : array (if permutations>0)
+    seI_sim       : array
+                    (if permutations>0)
                     standard deviation of I under permutations.
-    z_sim         : array (if permutations>0)
+    z_sim         : array
+                    (if permutations>0)
                     standardized I based on permutations
-    p_z_sim       : float  (if permutations>0)
+    p_z_sim       : float
+                    (if permutations>0)
                     p-value based on standard normal approximation from
                     permutations
 
@@ -306,11 +320,11 @@ class Moran_BV:
             sim = [self.__calc(nrp(zy)) for i in xrange(permutations)]
             self.sim = sim = np.array(sim)
             above = sim >= self.I
-            larger = sum(above)
+            larger = above.sum()
             if (permutations - larger) < larger:
                 larger = permutations - larger
             self.p_sim = (larger + 1.) / (permutations + 1.)
-            self.EI_sim = sum(sim) / permutations
+            self.EI_sim = sim.sum() / permutations
             self.seI_sim = np.array(sim).std()
             self.VI_sim = self.seI_sim ** 2
             self.z_sim = (self.I - self.EI_sim) / self.seI_sim
@@ -321,8 +335,8 @@ class Moran_BV:
 
     def __calc(self, zy):
         wzy = slag(self.w, zy)
-        self.num = sum(self.zx * wzy)
-        self.den = sum(zy * zy)
+        self.num = (self.zx * wzy).sum()
+        self.den = (zy * zy).sum()
         return self.num / self.den
 
 
@@ -409,14 +423,14 @@ class Moran_Rate(Moran):
     adjusted        : boolean
                       whether or not Moran's I needs to be adjusted for rate
                       variable
-    transformation  : string
+    transformation  : {'R', 'B', 'D', 'U', 'V'}
                       weights transformation, default is row-standardized "r".
                       Other options include
                       "B": binary,
                       "D": doubly-standardized,
                       "U": untransformed (general weights),
                       "V": variance-stabilizing.
-    two_tailed      : Boolean
+    two_tailed      : boolean
                       If True (default), analytical p-values for Moran's I are
                       two-tailed, otherwise they are one tailed.
     permutations    : int
@@ -444,7 +458,7 @@ class Moran_Rate(Moran):
     z_norm       : float
                    z-value of I under normality assumption
     p_norm       : float
-                   p-value of I under normality assumption 
+                   p-value of I under normality assumption
     VI_rand      : float
                    variance of I under randomization assumption
     seI_rand     : float
@@ -453,26 +467,33 @@ class Moran_Rate(Moran):
                    z-value of I under randomization assumption
     p_rand       : float
                    p-value of I under randomization assumption
-    two_tailed   : Boolean
+    two_tailed   : boolean
                    If True, p_norm and p_rand are two-tailed p-values,
                    otherwise they are one-tailed.
-    sim          : array (if permutations>0)
+    sim          : array
+                   (if permutations>0)
                    vector of I values for permuted samples
-    p_sim        : array (if permutations>0)
+    p_sim        : array
+                   (if permutations>0)
                    p-value based on permutations (one-sided)
                    null: spatial randomness
                    alternative: the observed I is extreme if it is
                    either extremely greater or extremely lower than the values
                    obtained from permutaitons
-    EI_sim       : float (if permutations>0)
+    EI_sim       : float
+                   (if permutations>0)
                    average value of I from permutations
-    VI_sim       : float (if permutations>0)
+    VI_sim       : float
+                   (if permutations>0)
                    variance of I from permutations
-    seI_sim      : float (if permutations>0)
+    seI_sim      : float
+                   (if permutations>0)
                    standard deviation of I under permutations.
-    z_sim        : float (if permutations>0)
+    z_sim        : float
+                   (if permutations>0)
                    standardized I based on permutations
-    p_z_sim      : float (if permutations>0)
+    p_z_sim      : float
+                   (if permutations>0)
                    p-value based on standard normal approximation from
 
     References
@@ -510,20 +531,24 @@ class Moran_Local:
 
     Parameters
     ----------
-    y : n*1 array
-
-    w : weight instance assumed to be aligned with y
-
-    transformation : string
+    y : array
+        (n,1), attribute array
+    w : W
+        weight instance assumed to be aligned with y
+    transformation : {'R', 'B', 'D', 'U', 'V'}
                      weights transformation,  default is row-standardized "r".
                      Other options include
                      "B": binary,
                      "D": doubly-standardized,
                      "U": untransformed (general weights),
                      "V": variance-stabilizing.
-
-    permutations   : number of random permutations for calculation of pseudo
+    permutations   : int
+                     number of random permutations for calculation of pseudo
                      p_values
+    geoda_quads    : boolean
+                     (default=False)
+                     If True use GeoDa scheme: HH=1, LL=2, LH=3, HL=4
+                     If False use PySAL Scheme: HH=1, LH=2, LL=3, HL=4
 
     Attributes
     ----------
@@ -537,48 +562,60 @@ class Moran_Local:
                    p_values
     Is           : float
                    value of Moran's I
-    q            : array (if permutations>0)
+    q            : array
+                   (if permutations>0)
                    values indicate quadrat location 1 HH,  2 LH,  3 LL,  4 HL
-    sim          : array (if permutations>0)
+    sim          : array
+                   (if permutations>0)
                    vector of I values for permuted samples
-    p_sim        : array (if permutations>0)
+    p_sim        : array
+                   (if permutations>0)
                    p-value based on permutations (one-sided)
                    null: spatial randomness
                    alternative: the observed Ii is further away or extreme
                    from the median of simulated values. It is either extremelyi
                    high or extremely low in the distribution of simulated Is.
-    EI_sim       : float (if permutations>0)
+    EI_sim       : float
+                   (if permutations>0)
                    average value of I from permutations
-    VI_sim       : float (if permutations>0)
+    VI_sim       : float
+                   (if permutations>0)
                    variance of I from permutations
-    seI_sim      : float (if permutations>0)
+    seI_sim      : float
+                   (if permutations>0)
                    standard deviation of I under permutations.
-    z_sim        : float (if permutations>0)
+    z_sim        : float
+                   (if permutations>0)
                    standardized I based on permutations
-    p_z_sim      : float (if permutations>0)
+    p_z_sim      : float
+                   (if permutations>0)
                    p-value based on standard normal approximation from
                    permutations (one-sided)
                    for two-sided tests, these values should be multiplied by 2
 
     Examples
     --------
-    >>> import pysal
+    >>> import pysal as ps
     >>> import numpy as np
     >>> np.random.seed(10)
-    >>> w = pysal.open(pysal.examples.get_path("desmith.gal")).read()
-    >>> f = pysal.open(pysal.examples.get_path("desmith.txt"))
+    >>> w = ps.open(ps.examples.get_path("desmith.gal")).read()
+    >>> f = ps.open(ps.examples.get_path("desmith.txt"))
     >>> y = np.array(f.by_col['z'])
-    >>> lm = Moran_Local(y, w, transformation = "r", permutations = 99)
+    >>> lm = ps.Moran_Local(y, w, transformation = "r", permutations = 99)
     >>> lm.q
     array([4, 4, 4, 2, 3, 3, 1, 4, 3, 3])
     >>> lm.p_z_sim[0]
     0.46756830387716064
+    >>> lm = ps.Moran_Local(y, w, transformation = "r", permutations = 99, geoda_quads=True)
+    >>> lm.q
+    array([4, 4, 4, 3, 2, 2, 1, 4, 2, 2])
 
     Note random components result is slightly different values across
     architectures so the results have been removed from doctests and will be
     moved into unittests that are conditional on architectures
     """
-    def __init__(self, y, w, transformation="r", permutations=PERMUTATIONS):
+    def __init__(self, y, w, transformation="r", permutations=PERMUTATIONS,
+        geoda_quads=False):
         self.y = y
         n = len(y)
         self.n = n
@@ -594,14 +631,19 @@ class Moran_Local:
         w.transform = transformation
         self.w = w
         self.permutations = permutations
-        self.den = sum(z * z)
+        self.den = (z * z).sum()
         self.Is = self.calc(self.w, self.z)
+        self.geoda_quads = geoda_quads
+        quads = [1, 2, 3, 4]
+        if geoda_quads:
+            quads = [1, 3, 2, 4]
+        self.quads = quads
         self.__quads()
         if permutations:
             self.__crand()
             sim = np.transpose(self.rlisas)
             above = sim >= self.Is
-            larger = np.sum(above, axis=0)
+            larger = above.sum(0)
             low_extreme = (self.permutations - larger) < larger
             larger[low_extreme] = self.permutations - larger[low_extreme]
             self.p_sim = (larger + 1.0) / (permutations + 1.0)
@@ -624,7 +666,7 @@ class Moran_Local:
         i (we don't want i being a neighbor of i). we have to sample without
         replacement from a set of ids that doesn't include i. numpy doesn't
         directly support sampling wo replacement and it is expensive to
-        implement this. instead we omit i from the original ids,  permutate the
+        implement this. instead we omit i from the original ids,  permute the
         ids and take the first ni elements of the permuted ids as the
         neighbors to i in each randomization.
 
@@ -656,7 +698,8 @@ class Moran_Local:
         np = (1 - zp) * lp
         nn = (1 - zp) * (1 - lp)
         pn = zp * (1 - lp)
-        self.q = 1 * pp + 2 * np + 3 * nn + 4 * pn
+        self.q = self.quads[0] * pp + self.quads[1] * np + self.quads[2] * nn + self.quads[3] * pn
+
 
 
 class Moran_Local_Rate(Moran_Local):
@@ -665,24 +708,29 @@ class Moran_Local_Rate(Moran_Local):
 
     Parameters
     ----------
-    e : n*1 array
-        an event variable across n spatial units
-    b : n*1 array
-        a population-at-risk variable across n spatial units
-    w : weight instance assumed to be aligned with y
-    adjusted: boolean
+    e : array
+        (n,1), an event variable across n spatial units
+    b : array
+        (n,1), a population-at-risk variable across n spatial units
+    w : W
+        weight instance assumed to be aligned with y
+    adjusted : boolean
               whether or not local Moran statistics need to be adjusted for
               rate variable
-    transformation : string
+    transformation : {'R', 'B', 'D', 'U', 'V'}
                      weights transformation,  default is row-standardized "r".
                      Other options include
                      "B": binary,
                      "D": doubly-standardized,
                      "U": untransformed (general weights),
                      "V": variance-stabilizing.
-    permutations   : number of random permutations for calculation of pseudo
+    permutations   : int
+                     number of random permutations for calculation of pseudo
                      p_values
-
+    geoda_quads    : boolean
+                     (default=False)
+                     If True use GeoDa scheme: HH=1, LL=2, LH=3, HL=4
+                     If False use PySAL Scheme: HH=1, LH=2, LL=3, HL=4
     Attributes
     ----------
     y            : array
@@ -696,25 +744,33 @@ class Moran_Local_Rate(Moran_Local):
                    p_values
     I            : float
                    value of Moran's I
-    q            : array (if permutations>0)
+    q            : array
+                   (if permutations>0)
                    values indicate quadrat location 1 HH,  2 LH,  3 LL,  4 HL
-    sim          : array (if permutations>0)
+    sim          : array
+                   (if permutations>0)
                    vector of I values for permuted samples
-    p_sim        : array (if permutations>0)
+    p_sim        : array
+                   (if permutations>0)
                    p-value based on permutations (one-sided)
                    null: spatial randomness
                    alternative: the observed Ii is further away or extreme
                    from the median of simulated Iis. It is either extremely
                    high or extremely low in the distribution of simulated Is
-    EI_sim       : float (if permutations>0)
+    EI_sim       : float
+                   (if permutations>0)
                    average value of I from permutations
-    VI_sim       : float (if permutations>0)
+    VI_sim       : float
+                   (if permutations>0)
                    variance of I from permutations
-    seI_sim      : float (if permutations>0)
+    seI_sim      : float
+                   (if permutations>0)
                    standard deviation of I under permutations.
-    z_sim        : float (if permutations>0)
+    z_sim        : float
+                   (if permutations>0)
                    standardized I based on permutations
-    p_z_sim      : float (if permutations>0)
+    p_z_sim      : float
+                   (if permutations>0)
                    p-value based on standard normal approximation from
                    permutations (one-sided)
                    for two-sided tests, these values should be multiplied by 2
@@ -726,20 +782,26 @@ class Moran_Local_Rate(Moran_Local):
 
     Examples
     --------
-    >>> import pysal
+    >>> import pysal as ps
     >>> import numpy as np
     >>> np.random.seed(10)
-    >>> w = pysal.open(pysal.examples.get_path("sids2.gal")).read()
-    >>> f = pysal.open(pysal.examples.get_path("sids2.dbf"))
+    >>> w = ps.open(ps.examples.get_path("sids2.gal")).read()
+    >>> f = ps.open(ps.examples.get_path("sids2.dbf"))
     >>> e = np.array(f.by_col('SID79'))
     >>> b = np.array(f.by_col('BIR79'))
-    >>> lm = pysal.esda.moran.Moran_Local_Rate(e, b, w, \
+    >>> lm = ps.esda.moran.Moran_Local_Rate(e, b, w, \
                                                transformation = "r", \
                                                permutations = 99)
     >>> lm.q[:10]
     array([2, 4, 3, 1, 2, 1, 1, 4, 2, 4])
     >>> lm.p_z_sim[0]
     0.39319552026912641
+    >>> lm = ps.esda.moran.Moran_Local_Rate(e, b, w, \
+                                               transformation = "r", \
+                                               permutations = 99, \
+                                               geoda_quads=True)
+    >>> lm.q[:10]
+    array([3, 4, 2, 1, 3, 1, 1, 4, 3, 4])
 
     Note random components result is slightly different values across
     architectures so the results have been removed from doctests and will be
@@ -747,14 +809,15 @@ class Moran_Local_Rate(Moran_Local):
     """
 
     def __init__(self, e, b, w, adjusted=True, transformation="r",
-                 permutations=PERMUTATIONS):
+                 permutations=PERMUTATIONS, geoda_quads=False):
         if adjusted:
             y = assuncao_rate(e, b)
         else:
             y = e * 1.0 / b
         Moran_Local.__init__(self, y, w,
                              transformation=transformation,
-                             permutations=permutations)
+                             permutations=permutations,
+                             geoda_quads=geoda_quads)
 
 
 def _test():

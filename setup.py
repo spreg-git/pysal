@@ -19,8 +19,8 @@ with open('README.txt') as file:
     long_description = file.read()
 
 MAJOR = 1
-MINOR = 7
-MICRO = 0
+MINOR = 10
+MICRO = 1
 ISRELEASED = False
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
@@ -109,7 +109,8 @@ def setup_package():
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7'
         ],
-        packages=find_packages(exclude=["*.network", "*.network.*", "network.*", "network"]),
+        packages=find_packages(exclude=[".meta", "*.meta.*", "meta.*",
+                                        "meta"]),
         package_data={'pysal': list(example_data_files)},
         requires=['scipy']
     )

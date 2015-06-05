@@ -1,5 +1,6 @@
 """
-Contiguity based spatial weights
+Contiguity based spatial weights.
+
 """
 
 __author__ = "Sergio J. Rey <srey@asu.edu> "
@@ -15,12 +16,13 @@ WT_TYPE = {'rook': 2, 'queen': 1}  # for _contW_Binning
 
 def buildContiguity(polygons, criterion="rook", ids=None):
     """
-    Build contiguity weights from a source
+    Build contiguity weights from a source.
 
     Parameters
     ----------
 
-    polygons   : an instance of a pysal geo file handler
+    polygons   : 
+                 an instance of a pysal geo file handler
                  Any thing returned by pysal.open that is explicitly polygons
     criterion  : string
                  contiguity criterion ("rook","queen")
@@ -30,8 +32,8 @@ def buildContiguity(polygons, criterion="rook", ids=None):
     Returns
     -------
 
-    w         : W instance
-                Contiguity weights object
+    w         : W 
+                instance; Contiguity weights object
 
     Examples
     --------
@@ -45,12 +47,12 @@ def buildContiguity(polygons, criterion="rook", ids=None):
     WARNING: there is one disconnected observation (no neighbors)
     Island id:  [163]
     >>> w.pct_nonzero
-    0.031926364234056544
+    3.1926364234056543
     >>> w = buildContiguity(pysal.open(pysal.examples.get_path('10740.shp'),'r'),criterion='rook')
     WARNING: there is one disconnected observation (no neighbors)
     Island id:  [163]
     >>> w.pct_nonzero
-    0.026351084812623275
+    2.6351084812623276
     >>> fips = pysal.open(pysal.examples.get_path('10740.dbf')).by_col('STFID')
     >>> w = buildContiguity(pysal.open(pysal.examples.get_path('10740.shp'),'r'),ids=fips)
     WARNING: there is one disconnected observation (no neighbors)
@@ -68,6 +70,7 @@ def buildContiguity(polygons, criterion="rook", ids=None):
     pysal.weights.W # need to fix sphinx links
 
     """
+
     if ids and len(ids) != len(set(ids)):
         raise ValueError("The argument to the ids parameter contains duplicate entries.")
 
@@ -78,7 +81,7 @@ def buildContiguity(polygons, criterion="rook", ids=None):
         geoObj = geo
     else:
         raise TypeError(
-            "Argument must be a FileIO handler or connection string")
+            "Argument must be a FileIO handler or connection string.")
     neighbor_data = ContiguityWeights(geoObj, wt_type).w
     neighbors = {}
     #weights={}

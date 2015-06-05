@@ -72,7 +72,7 @@ The w object has a number of attributes:
     >>> w.n
     25
     >>> w.pct_nonzero
-    0.128
+    12.8
     >>> w.weights[0]
     [1.0, 1.0]
     >>> w.neighbors[0]
@@ -515,7 +515,7 @@ define the second order contiguity relations using:
 
     >>> w2 = pysal.higher_order(w, 2)
     >>> w2.neighbors[0]
-    [2, 4, 6]
+    [4, 6, 2]
 
 or a fourth order set of weights:
 
